@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice Q&A</title>
+</head>
+<body>
+  <h2>Voice Q&A (Ask something)</h2>
+  <button onclick="startRecognition()">🎤 Ask</button>
+  <p><strong>You said:</strong> <span id="transcript"></span></p>
+  <p><strong>Response:</strong> <span id="response"></span></p>
+
+  <script>
+    // Sample Q&A JSON data
+    const qaData = {
+      "what is your name": "My name is VoiceBot.",
+      "how are you": "I am doing great, thank you!",
+      "what is javascript": "JavaScript is a programming language used in web development."
+    };
+
+    const transcriptElem = document.getElementById("transcript");
+    const responseElem = document.getElementById("response");
+
+    function startRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition not supported in this browser.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        transcriptElem.textContent = transcript;
+
+        const reply = qaData[transcript] || "Sorry, I don't know the answer to that.";
+        responseElem.textContent = reply;
+
+        // Speak the reply
+        const utterance = new SpeechSynthesisUtterance(reply);
+        window.speechSynthesis.speak(utterance);
+      };
+
+      recognition.onerror = function(event) {
+        transcriptElem.textContent = "Error: " + event.error;
+      };
+    }
+  </script>
+</body>
+</html>
