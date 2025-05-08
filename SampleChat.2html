@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice QnA with Voice Selection</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      height: 100vh;
+      background: linear-gradient(135deg, #007CF0, #00DFD8);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+
+    button, select {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      margin-right: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div style="width: 500px;margin-left:auto;margin-right: auto;margin-top:auto;border:1px solid black;padding: 30px;">
+  <h2>🎙️ Ask a Question by Voice</h2>
+  <button onclick="startRecognition()">Start Listening</button>
+  <select id="voiceSelect"></select>
+  <div id="divChat" style="height: 150px;overflow-y: auto;background-color: white;color: black;">
+    <!-- <p>You said:<span id="transcript"></span></p>
+    <p>Response:<span id="response"></span></p> -->
+  </div>
+</div>
+  
+
+  <script>
+    const qaData = {
+      "what is your name": "My name is VoiceBot.",
+      "how are you": "I'm doing great, thank you!",
+      "what is javascript": "JavaScript is a programming language used to make web pages interactive.",
+      "who created you": "I was created using JavaScript and browser APIs.",
+      "what is the time now": `It is ${new Date().toLocaleTimeString()}`,
+      "who won the first cricket world cup": "The West Indies won the first Cricket World Cup in 1975.",
+      "what is a hat-trick in cricket": "It means a bowler takes three wickets in three consecutive deliveries."
+    };
+  
+    const transcriptElem = document.getElementById("transcript");
+    const responseElem = document.getElementById("response");
+    const voiceSelect = document.getElementById("voiceSelect");
+  
+    const synth = window.speechSynthesis;
+    let voices = [];
+  
+    function populateVoiceList() {
+      voices = synth.getVoices();
+      voiceSelect.innerHTML = "";
+      voices.forEach((voice, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+    }
+  
+    synth.onvoiceschanged = populateVoiceList;
+  
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.continuous = false; // use manual restart for control
+  
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript.toLowerCase();
+      //transcriptElem.textContent = transcript;
+  
+      let reply = qaData[transcript] || "Sorry, I don't know the answer to that.";
+      //responseElem.textContent = reply;
+      
+      const spantranscript = document.createElement('span');
+      spantranscript.textContent = "You: "+transcript;
+      spantranscript.style.color = "black"; // optional styling
+      spantranscript.style.marginTop="10px;"
+      document.getElementById('divChat').appendChild(spantranscript);
+      const br = document.createElement('br');
+      document.getElementById('divChat').appendChild(br);
+
+      const spanreply = document.createElement('span');
+      spanreply.textContent ="Bot: " +reply;
+      spanreply.style.color = "black"; // optional styling
+      document.getElementById('divChat').appendChild(spanreply);
+      const br2 = document.createElement('br');
+      const br3 = document.createElement('br');
+      document.getElementById('divChat').appendChild(br2);
+      document.getElementById('divChat').appendChild(br3);
+
+      document.getElementById('divChat').scrollTop = document.getElementById('divChat').scrollHeight;
+
+      const utterance = new SpeechSynthesisUtterance(reply);
+      utterance.voice = voices[voiceSelect.value];
+  
+      // restart recognition after speaking
+      utterance.onend = () => {
+        recognition.start(); // restart after speaking
+      };
+  
+      synth.speak(utterance);
+    };
+  
+    recognition.onerror = function(event) {
+      console.error("Recognition error:", event.error);
+      recognition.start(); // recover from some errors
+    };
+  
+    recognition.onend = function() {
+      // don't restart immediately to avoid overlap
+      if (!synth.speaking) {
+        recognition.start(); // only restart if not speaking
+      }
+    };
+  
+    function startRecognition() {
+      recognition.start();
+    }
+  </script>
+  
+</body>
+</html>
